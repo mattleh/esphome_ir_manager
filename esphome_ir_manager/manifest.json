@@ -1,0 +1,10 @@
+{
+  "domain": "esphome_ir_manager",
+  "name": "ESPHome IR Manager",
+  "version": "1.1.0",
+  "documentation": "https://github.com/yourusername/esphome_ir_manager",
+  "dependencies": ["recorder"],
+  "codeowners": ["@yourusername"],
+  "iot_class": "local_push",
+  "config_flow": true
+}

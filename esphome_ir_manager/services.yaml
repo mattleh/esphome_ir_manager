@@ -1,0 +1,48 @@
+save_code:
+  fields:
+    name:
+      required: true
+      selector:
+        text: {}
+    selected_code:
+      required: true
+      selector:
+        attribute:
+          entity_id: esphome_ir_manager.history_manager
+    repeat:
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 10
+          mode: box
+
+send_code:
+  fields:
+    name:
+      required: true
+      selector:
+        attribute:
+          entity_id: esphome_ir_manager.library_manager
+    target_action:
+      required: true
+      selector:
+        action: {}
+
+manage_library:
+  fields:
+    target_name:
+      required: true
+      selector:
+        attribute:
+          entity_id: esphome_ir_manager.library_manager
+    action:
+      required: true
+      selector:
+        select:
+          options:
+            - "Rename"
+            - "Delete"
+    new_name:
+      selector:
+        text: {}

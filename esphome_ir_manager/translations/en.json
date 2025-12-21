@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "ESPHome IR Manager",
+        "description": "Select the entities that receive IR codes.",
+        "data": {
+          "listeners": "IR Receiver Sensors"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Configure IR Manager",
+        "data": {
+          "listeners": "Update IR Receiver Sensors"
+        }
+      }
+    }
+  },
+  "entity": {
+    "select": {
+      "library_selector": {
+        "name": "Selected Command"
+      }
+    }
+  },
+  "services": {
+    "save_code": {
+      "name": "Save Code",
+      "description": "Save a code from history.",
+      "fields": {
+        "name": { "name": "Name" },
+        "selected_code": { "name": "Code" },
+        "repeat": { "name": "Repeat" }
+      }
+    },
+    "send_code": {
+      "name": "Send Code",
+      "description": "Send a saved code.",
+      "fields": {
+        "name": { "name": "Command" },
+        "target_action": { "name": "Service" }
+      }
+    },
+    "manage_library": {
+      "name": "Manage Library",
+      "description": "Rename or delete codes.",
+      "fields": {
+        "target_name": { "name": "Command" },
+        "action": { "name": "Action" },
+        "new_name": { "name": "New Name" }
+      }
+    }
+  }
+}
