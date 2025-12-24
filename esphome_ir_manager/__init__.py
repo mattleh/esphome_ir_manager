@@ -113,20 +113,19 @@ async def async_setup_entry(hass: HomeAssistant, entry):
             _LOGGER.error("Error saving code: %s", e)
 
     async def async_send_code(call: ServiceCall):
-        """Send code with robust hex conversion."""
+        """Sends a code to all selected services in the target_action list."""
         name = call.data.get("name")
         target_data = call.data.get("target_action")
         
-        target_service = None
-        if isinstance(target_data, list) and len(target_data) > 0:
-            target_service = target_data[0].get("action") or target_data[0].get("service")
-        elif isinstance(target_data, dict):
-            target_service = target_data.get("action") or target_data.get("service")
-        else:
-            target_service = target_data
+        # 1. Ensure target_data is a list we can iterate over
+        targets = []
+        if isinstance(target_data, list):
+            targets = target_data
+        elif isinstance(target_data, (dict, str)):
+            targets = [target_data]
 
-        if not target_service or "." not in str(target_service):
-            _LOGGER.error("Invalid service: %s", target_data)
+        if not targets:
+            _LOGGER.error("No target services defined for sending code")
             return
 
         db = await hass.async_add_executor_job(load_codes_sync)
@@ -134,6 +133,7 @@ async def async_setup_entry(hass: HomeAssistant, entry):
             d = db[name]["data"]
             repeat = db[name].get("repeat", 1)
             
+            # Hex helper
             def to_int(val):
                 s = str(val).strip()
                 if "0x" in s.lower() or any(c in s.upper() for c in "ABCDEF"):
@@ -141,15 +141,31 @@ async def async_setup_entry(hass: HomeAssistant, entry):
                 return int(s)
 
             try:
-                domain, svc = target_service.split(".")
-                await hass.services.async_call(domain, svc, {
-                    "address": to_int(d["address"]),
-                    "command": to_int(d["command"]),
-                    "repeats": int(repeat)
-                })
-                _LOGGER.info("IR code '%s' sent successfully", name)
+                addr = to_int(d["address"])
+                cmd = to_int(d["command"])
+                
+                # 2. Loop through every target selected in the UI
+                for item in targets:
+                    target_service = None
+                    if isinstance(item, dict):
+                        target_service = item.get("action") or item.get("service")
+                    elif isinstance(item, str):
+                        target_service = item
+
+                    if target_service and "." in target_service:
+                        domain, svc = target_service.split(".")
+                        _LOGGER.info("Sending '%s' to %s.%s", name, domain, svc)
+                        
+                        await hass.services.async_call(domain, svc, {
+                            "address": addr, 
+                            "command": cmd,
+                            "repeats": int(repeat)
+                        })
+                    else:
+                        _LOGGER.warning("Skipping invalid target: %s", item)
+
             except Exception as e:
-                _LOGGER.error("Send error for '%s': %s", name, e)
+                _LOGGER.error("Execution error for '%s': %s", name, e)
 
     async def async_manage_library(call: ServiceCall):
         """Manage library codes."""
