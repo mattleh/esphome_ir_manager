@@ -9,6 +9,9 @@ A professional Home Assistant integration designed to bridge the gap between ESP
 - **Dynamic Repeats:** Define how many times a signal should be repeated per command.
 - **Localized UI:** Fully English interface with translation support.
 
+### Multi-Device Broadcasting
+The `send_code` service supports multiple targets. If you have several IR blasters in different rooms or covering different angles, you can select all of them in the "Transmitter Service" field. The manager will iterate through the list and trigger each one sequentially.
+
 ---
 
 ## ESPHome Device Configuration
@@ -48,6 +51,22 @@ remote_transmitter:
     number: D2 # Adjust to your specific GPIO pin
   carrier_duty_cycle: 50%
 
+script:
+  - id: ir_queue_script
+    mode: queued
+    max_runs: 50 # Erlaubt eine längere Warteschlange
+    parameters:
+      addr: int
+      cmd: int
+      reps: int
+    then:
+      - remote_transmitter.transmit_nec:
+          address: !lambda 'return addr;'
+          command: !lambda 'return cmd;'
+          repeat:
+            times: !lambda 'return reps;'
+      - delay: 100ms
+
 api:
   services:
     - service: send_ir_code_nec
@@ -56,11 +75,12 @@ api:
         command: int
         repeats: int
       then:
-        - remote_transmitter.transmit_nec:
-            address: !lambda 'return address;'
-            command: !lambda 'return command;'
-            repeat: 
-              times: !lambda 'return repeats;'
+        # Wir rufen ein Script auf, statt den Befehl direkt zu senden
+        - script.execute:
+            id: ir_queue_script
+            addr: !lambda 'return address;'
+            cmd: !lambda 'return command;'
+            reps: !lambda 'return repeats;'
 ```
 
 ### How to Use
@@ -77,5 +97,6 @@ Call the esphome_ir_manager.send_code service. Select your saved command and cho
 Protocol: Optimized for the NEC protocol.
 
 Storage: Data is saved in esphome_ir_codes.json in your /config/ folder.
+
 
 Requirements: The recorder integration must be active for the history to persist across UI refreshes.
